@@ -9,10 +9,10 @@ def read_directory_structure(startpath):
     for root, dirs, files in os.walk(startpath):
         level = root.replace(startpath, '').count(os.sep)
         indent = ' ' * 4 * (level)
-        output.append('{}{}/'.format(indent, os.path.basename(root)))
+        output.append('{}{}/ (directory)'.format(indent, os.path.basename(root)))
         subindent = ' ' * 4 * (level + 1)
         for f in files:
-            output.append('{}{}'.format(subindent, f))
+            output.append('{}{} (file)'.format(subindent, f))
     return '\n'.join(output)
 
 if __name__ == '__main__':
