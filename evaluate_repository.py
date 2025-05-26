@@ -2,13 +2,21 @@ from read_dir import read_directory_structure
 import json
 import sys
 import os
+import openai
 
 with open("scoring.json", "r") as f:
     SCORING_NORM = str(json.load(f))
 
+# llama.cppでllmが動いている想定
+client = openai.OpenAI(base_url="http://localhost:8080/v1",api_key="dummy")
+
 def call_llm(input: str):
-    print(input)
-    return "good"
+    messages = []
+    messages.append(dict(role="system", content="You are a helpful assistant."))
+    messages.append(dict(role="user", content=input))
+    completion = client.chat.completions.create(model="dummy",messages=messages)
+    return completion.choices[0].message.content
+
 
 def evaluate_repository(dir_str: str):
     prompt = """<SCORING_NORM>を参照に、<REPO_DIR>を評価してください。
