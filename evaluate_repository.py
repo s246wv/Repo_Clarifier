@@ -3,6 +3,7 @@ import yaml
 import sys
 import os
 import openai
+import re
 
 with open("scoring.yaml", "r") as f:
     SCORING_NORM = yaml.dump(yaml.safe_load(f), allow_unicode=True)
@@ -18,7 +19,7 @@ def call_llm(input: str):
     return completion.choices[0].message.content
 
 
-def evaluate_repository(dir_str: str):
+def evaluate_directory(dir_str: str):
     prompt = f"""以下の<SCORING_NORM>（リポジトリ評価基準）と<REPO_DIR>（対象リポジトリのディレクトリ階層）を詳細に比較・分析してください。
 このリポジトリを、他の開発者にとってより分かりやすく、質の高いものにするための評価と、具体的な改善提案を生成することが目的です。
 
@@ -54,6 +55,41 @@ def evaluate_repository(dir_str: str):
 """
     return call_llm(prompt)
 
+def evaluate_README(eval_dir: str, dir_str: str):
+    lines = dir_str.split("\n")
+    ind = -1
+    for i, line in enumerate(lines):
+        if re.search(r"README\.(md|rst|txt)", line, re.IGNORECASE):
+           ind = i
+           break
+    if ind == -1:
+        return -1
+    else:
+        readme_line = lines[ind]
+        indent_n = readme_line.find("README") // 4
+        for line in list(reversed(lines))[0-ind:]:
+            if line.startswith("    "):
+                current_indent = (len(line) - len(line.lstrip(" "))) // 4
+                if current_indent == indent_n:
+                    continue
+                else:
+                    if line.endswith("(directory)"):
+                        ret = eval_dir + line.replace(" (directory)", "")
+                    else:
+                        print("something wrong")
+            else:
+                if line.endswith("(directory)"):
+                    if line.replace(" (directory)", "") == "/":
+                        ret = eval_dir
+                    else:
+                        ret = eval_dir + line.replace(" (directory)")
+    if ret:
+        return ret
+    else:
+        return -1
+
+
+
 if __name__ == "__main__":
     # Example usage: evaluate the current directory
     if len(sys.argv) > 1:
@@ -62,5 +98,5 @@ if __name__ == "__main__":
             print(f"Error: '{eval_dir}' is not a valid directory.")
         else:
             eval_dir_structure = read_directory_structure(eval_dir)
-            evaluation_result = evaluate_repository(eval_dir_structure)
+            evaluation_result = evaluate_directory(eval_dir_structure)
             print(evaluation_result)
