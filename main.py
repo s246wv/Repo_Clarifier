@@ -14,7 +14,7 @@ def main():
     else:
         eval_dir_structure = read_directory_structure(eval_dir)
         evaluation_result = "/_/_/_/_/_/ディレクトリ階層の評価/_/_/_/_/_/\n\n"
-        evaluation_result = evaluate_directory(eval_dir_structure)
+        evaluation_result += evaluate_directory(eval_dir_structure)
         evaluation_result += "\n\n/_/_/_/_/_/READMEの評価/_/_/_/_/_/\n\n"
         evaluation_result += evaluate_README(eval_dir, eval_dir_structure)
         print(evaluation_result)
