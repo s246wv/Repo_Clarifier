@@ -67,6 +67,7 @@ def evaluate_README(eval_dir: str, dir_str: str):
     else:
         readme_line = lines[ind]
         indent_n = readme_line.find("README") // 4
+        readme_filename = readme_line.split(" (file)")[0][indent_n*4:]
         for line in list(reversed(lines))[0-ind:]:
             if line.startswith("    "):
                 current_indent = (len(line) - len(line.lstrip(" "))) // 4
@@ -74,19 +75,23 @@ def evaluate_README(eval_dir: str, dir_str: str):
                     continue
                 else:
                     if line.endswith("(directory)"):
-                        ret = eval_dir + line.replace(" (directory)", "")
+                        readme_path = eval_dir + line.replace(" (directory)", "") + readme_filename
                     else:
                         print("something wrong")
             else:
                 if line.endswith("(directory)"):
                     if line.replace(" (directory)", "") == "/":
-                        ret = eval_dir
+                        readme_path = eval_dir + readme_filename
                     else:
-                        ret = eval_dir + line.replace(" (directory)")
-    if ret:
-        return ret
+                        readme_path = eval_dir + line.replace(" (directory)") + readme_filename
+    if readme_path:
+        with open(readme_path, "r") as f:
+            readme_content = f.read()
+        prompt = f"""以下はREADMEの内容です。このリポジトリを、他の開発者にとってより分かりやすく、質の高いものにするために、具体的な改善提案を生成してください。
+<README>{readme_content}</README>"""
+        return call_llm(prompt)
     else:
-        return -1
+        return "READMEが見当たりません。"
 
 
 
@@ -99,4 +104,6 @@ if __name__ == "__main__":
         else:
             eval_dir_structure = read_directory_structure(eval_dir)
             evaluation_result = evaluate_directory(eval_dir_structure)
+            evaluation_result += "\n"
+            evaluation_result += evaluate_README(eval_dir, eval_dir_structure)
             print(evaluation_result)
